@@ -150,32 +150,25 @@ class PhantomROS {
 			omni_name.c_str(), sensable_frame_name.c_str()));
 
         l1.setOrigin(tf::Vector3(0., 0, 0.));
-        l1.setRotation(tf::Quaternion(-state->thetas[1], 0, 0));
+        l1.setRotation(tf::Quaternion(0, 0, -state->thetas[1]));
                                                                                                           
         l2.setOrigin(tf::Vector3(0., 0, 0.));                                                           
         l2.setRotation(tf::Quaternion(0, state->thetas[2], 0));                                         
                                                                                                           
-        l3.setOrigin(tf::Vector3(-.131, 0, 0.));                                                        
-        l3.setRotation(tf::Quaternion(0, state->thetas[3], 0));                            
+        l3.setOrigin(tf::Vector3(0, .131, 0.));                                                        
+        l3.setRotation(tf::Quaternion(0, state->thetas[3]-M_PI/2, 0));                            
                                                                                                           
-        l4.setOrigin(tf::Vector3(0., 0, -.137));                                                        
-        l4.setRotation(tf::Quaternion(state->thetas[4]+M_PI, 0, 0));                       
+        l4.setOrigin(tf::Vector3(0., .137, 0));                                                        
+        l4.setRotation(tf::Quaternion(-state->thetas[4]+M_PI, 0, 0));                       
                                                                                                           
         l5.setOrigin(tf::Vector3(0., 0., 0.));                                                          
-        l5.setRotation(tf::Quaternion(0., -state->thetas[5]+M_PI,0));                      
+        l5.setRotation(tf::Quaternion(0., -state->thetas[5]-M_PI,0));                      
 
         l6.setOrigin(tf::Vector3(0., 0., 0.));
-        l6.setRotation(tf::Quaternion(0.,0, state->thetas[6]+M_PI));
+        l6.setRotation(tf::Quaternion(0.,0, -state->thetas[6]-M_PI));
         
         l0_6 = l0 * l1 * l2 * l3 * l4 * l5 * l6;
         br.sendTransform(tf::StampedTransform(l0_6, ros::Time::now(), link_names[0].c_str(), link_names[6].c_str()));
-        //Don't send these as they slow down haptics thread
-        //br.sendTransform(tf::StampedTransform(l1, ros::Time::now(), link_names[0].c_str(), link_names[1].c_str()));
-        //br.sendTransform(tf::StampedTransform(l2, ros::Time::now(), link_names[1].c_str(), link_names[2].c_str()));
-        //br.sendTransform(tf::StampedTransform(l3, ros::Time::now(), link_names[2].c_str(), link_names[3].c_str()));
-        //br.sendTransform(tf::StampedTransform(l4, ros::Time::now(), link_names[3].c_str(), link_names[4].c_str()));
-        //br.sendTransform(tf::StampedTransform(l5, ros::Time::now(), link_names[4].c_str(), link_names[5].c_str()));
-        //br.sendTransform(tf::StampedTransform(link, ros::Time::now(), link_names[5].c_str(), link_names[6].c_str()));
         
         //Sample 'end effector' pose
         geometry_msgs::PoseStamped pose_stamped;
