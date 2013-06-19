@@ -141,31 +141,41 @@ class PhantomROS {
         //Construct transforms
         tf::Transform l0, sensable, l1, l2, l3, l4, l5, l6, l0_6;
         l0.setOrigin(tf::Vector3(0., 0, 0.15));
-        l0.setRotation(tf::Quaternion(0, 0, 0));
+
+        tf::Quaternion q0, q1, q2, q3, q4, q5, q6, qs;
+        q0.setRPY(0,0,0);
+        l0.setRotation(q0);
         br.sendTransform(tf::StampedTransform(l0, ros::Time::now(), omni_name.c_str(), link_names[0].c_str()));
 
         sensable.setOrigin(tf::Vector3(0., 0, 0));
-        sensable.setRotation(tf::Quaternion(-M_PI/2, 0, M_PI/2));
+        qs.setRPY(0, -M_PI/2, M_PI/2);
+        sensable.setRotation(qs);
         br.sendTransform(tf::StampedTransform(sensable, ros::Time::now(), 
 			omni_name.c_str(), sensable_frame_name.c_str()));
 
+        q1.setRPY(0, 0, -state->thetas[1]);
         l1.setOrigin(tf::Vector3(0., 0, 0.));
-        l1.setRotation(tf::Quaternion(0, 0, -state->thetas[1]));
-                                                                                                          
+        l1.setRotation(q1);
+                
+        q2.setRPY(state->thetas[2], 0, 0);                                                                                          
         l2.setOrigin(tf::Vector3(0., 0, 0.));                                                           
-        l2.setRotation(tf::Quaternion(0, state->thetas[2], 0));                                         
+        l2.setRotation(q2);                                         
                                                                                                           
+        q3.setRPY(state->thetas[3]-M_PI/2, 0, 0);
         l3.setOrigin(tf::Vector3(0, .131, 0.));                                                        
-        l3.setRotation(tf::Quaternion(0, state->thetas[3]-M_PI/2, 0));                            
+        l3.setRotation(q3);                            
                                                                                                           
+        q4.setRPY(0, -state->thetas[4]+M_PI, 0);
         l4.setOrigin(tf::Vector3(0., .137, 0));                                                        
-        l4.setRotation(tf::Quaternion(-state->thetas[4]+M_PI, 0, 0));                       
+        l4.setRotation(q4);                       
                                                                                                           
+        q5.setRPY(-state->thetas[5]-M_PI,0, 0);
         l5.setOrigin(tf::Vector3(0., 0., 0.));                                                          
-        l5.setRotation(tf::Quaternion(0., -state->thetas[5]-M_PI,0));                      
+        l5.setRotation(q5);                      
 
+        q6.setRPY(-state->thetas[6]-M_PI,0, 0);
         l6.setOrigin(tf::Vector3(0., 0., 0.));
-        l6.setRotation(tf::Quaternion(0.,0, -state->thetas[6]-M_PI));
+        l6.setRotation(q6);
         
         l0_6 = l0 * l1 * l2 * l3 * l4 * l5 * l6;
         br.sendTransform(tf::StampedTransform(l0_6, ros::Time::now(), link_names[0].c_str(), link_names[6].c_str()));
