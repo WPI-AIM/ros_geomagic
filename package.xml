@@ -18,6 +18,8 @@
   <build_depend>tf</build_depend>
   <build_depend>openhaptics-ae</build_depend>
   <build_depend>rosconsole</build_depend>
+  <build_depend>urdf</build_depend>
+  <build_depend>sensor_msgs</build_depend>
 
   <run_depend>roscpp</run_depend>
   <run_depend>std_msgs</run_depend>
@@ -26,7 +28,9 @@
   <run_depend>geometry_msgs</run_depend>
   <run_depend>tf</run_depend>
   <run_depend>rosconsole</run_depend>
-
+  <run_depend>urdf</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>omni_description</run_depend>
 </package>
 
 

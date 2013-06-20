@@ -3,6 +3,8 @@
 #include <tf/transform_broadcaster.h>
 #include <geometry_msgs/Wrench.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <urdf/model.h>
+#include <sensor_msgs/JointState.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -48,7 +50,7 @@ class PhantomROS {
 public:
 	ros::NodeHandle n;
 	ros::Publisher pose_publisher;
-	//ros::Publisher omni_pose_publisher;
+	ros::Publisher joint_pub;
 
 	ros::Publisher button_publisher;
 	ros::Subscriber haptic_sub;
@@ -58,6 +60,8 @@ public:
 
 	OmniState *state;
 	tf::TransformBroadcaster br;
+
+	urdf::Model model;
 
 	void init(OmniState *s) {
 		ros::param::param(std::string("~omni_name"), omni_name,
@@ -69,7 +73,8 @@ public:
 		std::string pose_topic_name = std::string(stream00.str());
 		pose_publisher = n.advertise<geometry_msgs::PoseStamped>(
 				pose_topic_name.c_str(), 100);
-		//omni_pose_publisher = n.advertise<geometry_msgs::PoseStamped>("omni_pose_internal", 100);
+
+		joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
 		//Publish button state on NAME_button
 		std::ostringstream stream0;
@@ -113,12 +118,16 @@ public:
 		state->pos_hist2 = zeros; //3x1 history of position
 		state->lock = true;
 		state->lock_pos = zeros;
+
+		if (!model.initFile("/home/dane/ros_ws/src/omni_description/urdf/omni.urdf")) {
+			ROS_ERROR("Failed to parse urdf file");
+		}
+		ROS_INFO("Successfully parsed urdf file");
 	}
 
 	/*******************************************************************************
 	 ROS node callback.
 	 *******************************************************************************/
-	//    void force_callback(const geometry_msgs::WrenchConstPtr& wrench)
 	void force_callback(const phantom_omni::OmniFeedbackConstPtr& omnifeed) {
 		////////////////////Some people might not like this extra damping, but it
 		////////////////////helps to stabilize the overall force feedback. It isn't
@@ -135,52 +144,23 @@ public:
 	}
 
 	void publish_omni_state() {
-		//Construct transforms
-		tf::Transform l0, sensable, l1, l2, l3, l4, l5, l6, l0_6;
-		l0.setOrigin(tf::Vector3(0., 0, 0.15));
-
-		tf::Quaternion q0, q1, q2, q3, q4, q5, q6, qs;
-		q0.setRPY(0, 0, 0);
-		l0.setRotation(q0);
-		br.sendTransform(
-				tf::StampedTransform(l0, ros::Time::now(), omni_name.c_str(),
-						link_names[0].c_str()));
-
-		sensable.setOrigin(tf::Vector3(0., 0, 0));
-		qs.setRPY(0, -M_PI / 2, M_PI / 2);
-		sensable.setRotation(qs);
-		br.sendTransform(
-				tf::StampedTransform(sensable, ros::Time::now(),
-						omni_name.c_str(), sensable_frame_name.c_str()));
-
-		q1.setRPY(0, 0, -state->thetas[1]);
-		l1.setOrigin(tf::Vector3(0., 0, 0.));
-		l1.setRotation(q1);
-
-		q2.setRPY(state->thetas[2], 0, 0);
-		l2.setOrigin(tf::Vector3(0., 0, 0.));
-		l2.setRotation(q2);
-
-		q3.setRPY(state->thetas[3] - M_PI / 2, 0, 0);
-		l3.setOrigin(tf::Vector3(0, .131, 0.));
-		l3.setRotation(q3);
-
-		q4.setRPY(0, -state->thetas[4] + M_PI, 0);
-		l4.setOrigin(tf::Vector3(0., .137, 0));
-		l4.setRotation(q4);
-
-		q5.setRPY(-state->thetas[5] - M_PI, 0, 0);
-		l5.setOrigin(tf::Vector3(0., 0., 0.));
-		l5.setRotation(q5);
-
-		q6.setRPY(-state->thetas[6] - M_PI, 0, 0);
-		l6.setOrigin(tf::Vector3(0., 0., 0.));
-		l6.setRotation(q6);
-
-		l0_6 = l0 * l1 * l2 * l3 * l4 * l5 * l6;
-		br.sendTransform(
-				tf::StampedTransform(l0_6, ros::Time::now(),
-						link_names[0].c_str(), link_names[6].c_str()));
+		sensor_msgs::JointState joint_state;
+		joint_state.header.stamp = ros::Time::now();
+		joint_state.name.resize(6);
+		joint_state.position.resize(6);
+		joint_state.name[0] = "waist";
+		joint_state.position[0] = -state->thetas[1];
+		joint_state.name[1] = "shoulder";
+		joint_state.position[1] = state->thetas[2];
+		joint_state.name[2] = "elbow";
+		joint_state.position[2] = state->thetas[3];
+		joint_state.name[3] = "wrist1";
+		joint_state.position[3] = -state->thetas[4] + M_PI;
+		joint_state.name[4] = "wrist2";
+		joint_state.position[4] = -state->thetas[5] - 3*M_PI/4;
+		joint_state.name[5] = "wrist3";
+		joint_state.position[5] = -state->thetas[6] - M_PI;
+		joint_pub.publish(joint_state);
 
 		//Sample 'end effector' pose
 		geometry_msgs::PoseStamped pose_stamped;
@@ -189,14 +169,6 @@ public:
 		pose_stamped.pose.position.x = 0.0;   //was 0.03 to end of phantom
 		pose_stamped.pose.orientation.w = 1.;
 		pose_publisher.publish(pose_stamped);
-
-		//geometry_msgs::PoseStamped omni_internal_pose;
-		//omni_internal_pose.header.frame_id = "sensable";
-		//omni_internal_pose.header.stamp = ros::Time::now();
-		//omni_internal_pose.pose.position.x = state->position[0]/1000.0;
-		//omni_internal_pose.pose.position.y = state->position[1]/1000.0;
-		//omni_internal_pose.pose.position.z = state->position[2]/1000.0;
-		//omni_pose_publisher.publish(omni_internal_pose);
 
 		if ((state->buttons[0] != state->buttons_prev[0])
 				or (state->buttons[1] != state->buttons_prev[1])) {
