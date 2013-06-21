@@ -140,7 +140,6 @@ public:
 		state->lock_pos[0] = omnifeed->position.x;
 		state->lock_pos[1] = omnifeed->position.y;
 		state->lock_pos[2] = omnifeed->position.z;
-		//        state->force[2] = wrench->force.z;
 	}
 
 	void publish_omni_state() {
