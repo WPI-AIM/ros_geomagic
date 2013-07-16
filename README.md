@@ -12,3 +12,6 @@ Changes from the original version:
 - Compatibility with ROS Groovy
 - General code cleanup
 - Uses URDF description of Omni instead of hardcoded transforms.
+
+To see it in action, simply:
+roslaunch phantom_omni omni.launch
