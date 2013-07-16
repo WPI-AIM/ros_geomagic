@@ -192,7 +192,6 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	hduVector3Dd vel_buff(0, 0, 0);
 	vel_buff = (omni_state->position * 3 - 4 * omni_state->pos_hist1
 			+ omni_state->pos_hist2) / 0.002;  //mm/s, 2nd order backward dif
-	//	omni_state->velocity = 0.0985*(vel_buff+omni_state->inp_vel3)+0.2956*(omni_state->inp_vel1+omni_state->inp_vel2)-(-0.5772*omni_state->out_vel1+0.4218*omni_state->out_vel2 - 0.0563*omni_state->out_vel3);    //cutoff freq of 200 Hz
 	omni_state->velocity = (.2196 * (vel_buff + omni_state->inp_vel3)
 			+ .6588 * (omni_state->inp_vel1 + omni_state->inp_vel2)) / 1000.0
 			- (-2.7488 * omni_state->out_vel1 + 2.5282 * omni_state->out_vel2
@@ -205,8 +204,6 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	omni_state->out_vel3 = omni_state->out_vel2;
 	omni_state->out_vel2 = omni_state->out_vel1;
 	omni_state->out_vel1 = omni_state->velocity;
-	//	printf("position x, y, z: %f %f %f \n", omni_state->position[0], omni_state->position[1], omni_state->position[2]);
-	//	printf("velocity x, y, z, time: %f %f %f \n", omni_state->velocity[0], omni_state->velocity[1],omni_state->velocity[2]);
 	if (omni_state->lock == true) {
 		omni_state->force = 0.04 * (omni_state->lock_pos - omni_state->position)
 				- 0.001 * omni_state->velocity;
@@ -224,7 +221,7 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 
 	HDErrorInfo error;
 	if (HD_DEVICE_ERROR(error = hdGetError())) {
-		hduPrintError(stderr, &error, "Error during main scheduler callback\n");
+		hduPrintError(stderr, &error, "Error during main scheduler callback");
 		if (hduIsSchedulerError(&error))
 			return HD_CALLBACK_DONE;
 	}
@@ -248,27 +245,27 @@ void HHD_Auto_Calibration() {
 	hdGetIntegerv(HD_CALIBRATION_STYLE, &supportedCalibrationStyles);
 	if (supportedCalibrationStyles & HD_CALIBRATION_ENCODER_RESET) {
 		calibrationStyle = HD_CALIBRATION_ENCODER_RESET;
-		ROS_INFO("HD_CALIBRATION_ENCODER_RESE..\n\n");
+		ROS_INFO("HD_CALIBRATION_ENCODER_RESE..");
 	}
 	if (supportedCalibrationStyles & HD_CALIBRATION_INKWELL) {
 		calibrationStyle = HD_CALIBRATION_INKWELL;
-		ROS_INFO("HD_CALIBRATION_INKWELL..\n\n");
+		ROS_INFO("HD_CALIBRATION_INKWELL..");
 	}
 	if (supportedCalibrationStyles & HD_CALIBRATION_AUTO) {
 		calibrationStyle = HD_CALIBRATION_AUTO;
-		ROS_INFO("HD_CALIBRATION_AUTO..\n\n");
+		ROS_INFO("HD_CALIBRATION_AUTO..");
 	}
 
 	do {
 		hdUpdateCalibration(calibrationStyle);
-		ROS_INFO("Calibrating.. (put stylus in well)\n");
+		ROS_INFO("Calibrating.. (put stylus in well)");
 		if (HD_DEVICE_ERROR(error = hdGetError())) {
 			hduPrintError(stderr, &error, "Reset encoders reset failed.");
 			break;
 		}
 	} while (hdCheckCalibration() != HD_CALIBRATION_OK);
 
-	ROS_INFO("\n\nCalibration complete.\n");
+	ROS_INFO("Calibration complete.");
 }
 
 void *ros_publish(void *ptr) {
@@ -299,7 +296,7 @@ int main(int argc, char** argv) {
 		return -1;
 	}
 
-	ROS_INFO("Found %s.\n\n", hdGetString(HD_DEVICE_MODEL_TYPE));
+	ROS_INFO("Found %s.", hdGetString(HD_DEVICE_MODEL_TYPE));
 	hdEnable(HD_FORCE_OUTPUT);
 	hdStartScheduler();
 	if (HD_DEVICE_ERROR(error = hdGetError())) {
@@ -326,7 +323,7 @@ int main(int argc, char** argv) {
 	pthread_create(&publish_thread, NULL, ros_publish, (void*) &omni_ros);
 	pthread_join(publish_thread, NULL);
 
-	ROS_INFO("Ending Session....\n");
+	ROS_INFO("Ending Session....");
 	hdStopScheduler();
 	hdDisableDevice(hHD);
 
