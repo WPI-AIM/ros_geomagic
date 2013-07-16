@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(phantom_omni)
 
-find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs genmsg rosconsole tf urdf roslib)
+find_package(catkin REQUIRED COMPONENTS roscpp std_msgs geometry_msgs genmsg rosconsole tf urdf)
 
 add_message_files(FILES PhantomButtonEvent.msg OmniFeedback.msg)
 
