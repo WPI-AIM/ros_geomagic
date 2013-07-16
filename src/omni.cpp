@@ -5,6 +5,7 @@
 #include <geometry_msgs/WrenchStamped.h>
 #include <urdf/model.h>
 #include <sensor_msgs/JointState.h>
+#include <ros/package.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -119,10 +120,11 @@ public:
 		state->lock = true;
 		state->lock_pos = zeros;
 
-		if (!model.initFile("/home/dane/ros_ws/src/omni_description/urdf/omni.urdf")) {
-			ROS_ERROR("Failed to parse urdf file");
-		}
-		ROS_INFO("Successfully parsed urdf file");
+		std::string path = ros::package::getPath("omni_description");
+		if (!model.initFile(path + "/urdf/omni.urdf")) {
+		  ROS_ERROR("Failed to parse urdf file");
+		} else {
+		  ROS_INFO("Successfully parsed urdf file");}
 	}
 
 	/*******************************************************************************
