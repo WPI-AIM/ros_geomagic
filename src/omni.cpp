@@ -23,6 +23,7 @@
 #include <pthread.h>
 
 float prev_time;
+int calibrationStyle;
 
 struct OmniState {
 	hduVector3Dd position;  //3x1 vector of position
@@ -182,7 +183,10 @@ public:
 
 HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	OmniState *omni_state = static_cast<OmniState *>(pUserData);
-
+	if (hdCheckCalibration() == HD_CALIBRATION_NEEDS_UPDATE) {
+	  ROS_DEBUG("Updating calibration...");
+	    hdUpdateCalibration(calibrationStyle);
+	  }
 	hdBeginFrame(hdGetCurrentDevice());
 	//Get angles, set forces
 	hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, omni_state->rot);
@@ -238,7 +242,6 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
  Automatic Calibration of Phantom Device - No character inputs
  *******************************************************************************/
 void HHD_Auto_Calibration() {
-	int calibrationStyle;
 	int supportedCalibrationStyles;
 	HDErrorInfo error;
 
@@ -255,8 +258,8 @@ void HHD_Auto_Calibration() {
 		calibrationStyle = HD_CALIBRATION_AUTO;
 		ROS_INFO("HD_CALIBRATION_AUTO..");
 	}
-
-	do {
+	if (calibrationStyle == HD_CALIBRATION_ENCODER_RESET) {
+	  do {
 		hdUpdateCalibration(calibrationStyle);
 		ROS_INFO("Calibrating.. (put stylus in well)");
 		if (HD_DEVICE_ERROR(error = hdGetError())) {
@@ -264,8 +267,11 @@ void HHD_Auto_Calibration() {
 			break;
 		}
 	} while (hdCheckCalibration() != HD_CALIBRATION_OK);
-
 	ROS_INFO("Calibration complete.");
+	}
+	if (hdCheckCalibration() == HD_CALIBRATION_NEEDS_MANUAL_INPUT) {
+	  ROS_INFO("Please place the device into the inkwell for calibration.");
+	}
 }
 
 void *ros_publish(void *ptr) {
