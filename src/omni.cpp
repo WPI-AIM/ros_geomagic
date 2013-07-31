@@ -65,7 +65,9 @@ public:
 
                 // Publish joint states for robot_state_publisher,
                 // and anyone else who wants them.
-		joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+		std::ostringstream joint_topic;
+		joint_topic << omni_name << "_joint_states";
+		joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
 
 		// Publish button state on NAME_button.
 		std::ostringstream button_topic;

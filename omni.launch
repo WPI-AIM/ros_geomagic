@@ -1,6 +1,8 @@
 <launch>
         <param name="robot_description" command="cat $(find omni_description)/urdf/omni.urdf" />
-        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher" />
+        <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher">
+	  <remap from="joint_states" to="omni1_joint_states" />
+	</node>
         <node name="omni1" pkg="phantom_omni" type="omni" output="screen" />
         <node name="rviz" pkg="rviz" type="rviz" args="-d $(find phantom_omni)/omni.rviz" required="true" />
 </launch>
