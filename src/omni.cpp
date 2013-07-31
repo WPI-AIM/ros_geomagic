@@ -52,10 +52,9 @@ public:
 	ros::NodeHandle n;
 	ros::Publisher joint_pub;
 
-	ros::Publisher button_publisher;
+	ros::Publisher button_pub;
 	ros::Subscriber haptic_sub;
 	std::string omni_name;
-	std::string sensable_frame_name;
 
 	OmniState *state;
 	tf::TransformBroadcaster br;
@@ -68,24 +67,16 @@ public:
                 // and anyone else who wants them.
 		joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
-		//Publish button state on NAME_button
-		std::ostringstream stream0;
-		stream0 << omni_name << "_button";
-		std::string button_topic = std::string(stream0.str());
-		button_publisher = n.advertise<phantom_omni::PhantomButtonEvent>(
-				button_topic.c_str(), 100);
+		// Publish button state on NAME_button.
+		std::ostringstream button_topic;
+		button_topic << omni_name << "_button";
+		button_pub = n.advertise<phantom_omni::PhantomButtonEvent>(button_topic.str(), 100);
 
-		//Subscribe to NAME_force_feedback
-		std::ostringstream stream01;
-		stream01 << omni_name << "_force_feedback";
-		std::string force_feedback_topic = std::string(stream01.str());
-		haptic_sub = n.subscribe(force_feedback_topic.c_str(), 100,
+		// Subscribe to NAME_force_feedback.
+		std::ostringstream force_feedback_topic;
+		force_feedback_topic << omni_name << "_force_feedback";
+		haptic_sub = n.subscribe(force_feedback_topic.str(), 100,
 				&PhantomROS::force_callback, this);
-
-		//Frame of force feedback (NAME_sensable)
-		std::ostringstream stream2;
-		stream2 << omni_name << "_sensable";
-		sensable_frame_name = std::string(stream2.str());
 
 		state = s;
 		state->buttons[0] = 0;
@@ -155,7 +146,7 @@ public:
 			button_event.white_button = state->buttons[1];
 			state->buttons_prev[0] = state->buttons[0];
 			state->buttons_prev[1] = state->buttons[1];
-			button_publisher.publish(button_event);
+			button_pub.publish(button_event);
 		}
 	}
 };
