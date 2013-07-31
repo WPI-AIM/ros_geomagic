@@ -11,7 +11,7 @@ Changes from the original version:
 - Catkinized build system
 - Compatibility with ROS Groovy
 - General code cleanup
-- Uses URDF description of Omni instead of hardcoded transforms.
+- Uses URDF description of Omni and the robot_state_publisher instead of hardcoded transforms.
 
 To see it in action, simply:
 roslaunch phantom_omni omni.launch
