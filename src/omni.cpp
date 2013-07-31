@@ -50,14 +50,12 @@ class PhantomROS {
 
 public:
 	ros::NodeHandle n;
-	ros::Publisher pose_publisher;
 	ros::Publisher joint_pub;
 
 	ros::Publisher button_publisher;
 	ros::Subscriber haptic_sub;
 	std::string omni_name;
 	std::string sensable_frame_name;
-	std::string link_names[7];
 
 	OmniState *state;
 	tf::TransformBroadcaster br;
@@ -66,13 +64,8 @@ public:
 		ros::param::param(std::string("~omni_name"), omni_name,
 				std::string("omni1"));
 
-		//Publish on NAME_pose
-		std::ostringstream stream00;
-		stream00 << omni_name << "_pose";
-		std::string pose_topic_name = std::string(stream00.str());
-		pose_publisher = n.advertise<geometry_msgs::PoseStamped>(
-				pose_topic_name.c_str(), 100);
-
+                // Publish joint states for robot_state_publisher,
+                // and anyone else who wants them.
 		joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
 
 		//Publish button state on NAME_button
@@ -93,12 +86,6 @@ public:
 		std::ostringstream stream2;
 		stream2 << omni_name << "_sensable";
 		sensable_frame_name = std::string(stream2.str());
-
-		for (int i = 0; i < 7; i++) {
-			std::ostringstream stream1;
-			stream1 << omni_name << "_link" << i;
-			link_names[i] = std::string(stream1.str());
-		}
 
 		state = s;
 		state->buttons[0] = 0;
@@ -155,14 +142,6 @@ public:
 		joint_state.name[5] = "wrist3";
 		joint_state.position[5] = -state->thetas[6] - M_PI;
 		joint_pub.publish(joint_state);
-
-		//Sample 'end effector' pose
-		geometry_msgs::PoseStamped pose_stamped;
-		pose_stamped.header.frame_id = link_names[6].c_str();
-		pose_stamped.header.stamp = ros::Time::now();
-		pose_stamped.pose.position.x = 0.0;   //was 0.03 to end of phantom
-		pose_stamped.pose.orientation.w = 1.;
-		pose_publisher.publish(pose_stamped);
 
 		if ((state->buttons[0] != state->buttons_prev[0])
 				or (state->buttons[1] != state->buttons_prev[1])) {
