@@ -3,9 +3,9 @@ phantom_omni
 
 ROS Node for Sensable Phantom Omni devices
 
-Requires the omni_description package available at https://github.com/danepowell/omni_description
+Requires the [omni_description](https://github.com/danepowell/omni_description) package. 
 
-Forked from https://code.google.com/p/gt-ros-pkg/source/checkout?repo=hrl
+Publishes and subscribes to the [same topics](http://www.ros.org/wiki/phantom_omni) as the [original node](https://code.google.com/p/gt-ros-pkg/source/checkout?repo=hrl).
 
 Changes from the original version:
 - Catkinized build system
