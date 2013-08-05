@@ -7,7 +7,7 @@ add_message_files(FILES PhantomButtonEvent.msg OmniFeedback.msg)
 
 generate_messages(DEPENDENCIES geometry_msgs)
 
-catkin_package(DEPENDS roscpp std_msgs geometry_msgs genmsg rosconsole tf urdf)
+catkin_package(CATKIN_DEPENDS roscpp std_msgs geometry_msgs genmsg rosconsole tf urdf)
 
 include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
