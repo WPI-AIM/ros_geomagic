@@ -10,6 +10,6 @@
 	</node>
 
 	<!-- rviz just lets you see the end result :) -->
-        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find phantom_omni)/omni.rviz" required="true" />
+        <node name="rviz" pkg="rviz" type="rviz" args="-d $(find phantom_omni)/cfg/omni.rviz" required="true" />
 </launch>
 
