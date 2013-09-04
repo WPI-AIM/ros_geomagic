@@ -1,9 +1,4 @@
 #include <ros/ros.h>
-#include <geometry_msgs/PoseStamped.h>
-#include <tf/transform_broadcaster.h>
-#include <geometry_msgs/Wrench.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <urdf/model.h>
 #include <sensor_msgs/JointState.h>
 
 #include <string.h>
@@ -22,7 +17,6 @@
 #include "phantom_omni/OmniFeedback.h"
 #include <pthread.h>
 
-float prev_time;
 int calibrationStyle;
 
 struct OmniState {
@@ -57,7 +51,6 @@ public:
 	std::string omni_name;
 
 	OmniState *state;
-	tf::TransformBroadcaster br;
 
 	void init(OmniState *s) {
 		ros::param::param(std::string("~omni_name"), omni_name,
