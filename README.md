@@ -19,7 +19,8 @@ This is based on the [original phantom_omni package](http://www.ros.org/wiki/pha
 - Catkinized build system
 - Compatibility with ROS Groovy
 - Uses URDF description of Omni and the robot_state_publisher instead of hardcoded transforms.
-- Streamlined code and organization.
+- Improved auto-calibration
+- Streamlined code / organization / bug fixes.
 
 To see it in action, simply:
 roslaunch phantom_omni omni.launch
