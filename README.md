@@ -5,13 +5,21 @@ ROS Node for Sensable Phantom Omni devices
 
 Requires the [omni_description](https://github.com/danepowell/omni_description) package. 
 
-Subscribes to the [same topics](http://www.ros.org/wiki/phantom_omni) as the [original node](https://code.google.com/p/gt-ros-pkg/source/checkout?repo=hrl). However, it does not publish the static end-effector pose. Rather, it publishes joint states and relies on robot_state_publisher to compute tfs.
+Parameters:
+- ~omni_name (default: omni1)
 
-Differences from the original version:
+Publishes:
+- OMNI_NAME_joint_states <sensor_msgs::JointState>: The state of each of the omni's joints.
+- OMNI_NAME_button <phantom_omni::PhantomButtonEvent>: Events for the grey and white buttons.
+
+Subscribes:
+- OMNI_NAME_force_feedback <geometry_msgs::Wrench>: Force feedback to be displayed on the omni.
+
+This is based on the [original phantom_omni package](http://www.ros.org/wiki/phantom_omni). However, it has several advantages:
 - Catkinized build system
 - Compatibility with ROS Groovy
 - Uses URDF description of Omni and the robot_state_publisher instead of hardcoded transforms.
-- General improvements to code size and organization.
+- Streamlined code and organization.
 
 To see it in action, simply:
 roslaunch phantom_omni omni.launch
