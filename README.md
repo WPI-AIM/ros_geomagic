@@ -21,6 +21,7 @@ This is based on the [original phantom_omni package](http://www.ros.org/wiki/pha
 - Uses URDF description of Omni and the robot_state_publisher instead of hardcoded transforms.
 - Improved auto-calibration
 - Streamlined code / organization / bug fixes.
+- Defaults to gravity compensation mode (instead of locking to the 'zero' position).
 
 To see it in action, simply:
 roslaunch phantom_omni omni.launch
