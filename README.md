@@ -13,7 +13,7 @@ Publishes:
 - OMNI_NAME_button (phantom_omni/PhantomButtonEvent): Events for the grey and white buttons.
 
 Subscribes:
-- OMNI_NAME_force_feedback (geometry_msgs/Wrench): Force feedback to be displayed on the omni.
+- OMNI_NAME_force_feedback (phantom_omni/OmniFeedback): Force feedback to be displayed on the omni. Takes a force and a position. If you simultaneously click the grey and white buttons, the omni will 'lock' to the position.
 
 This is based on the [original phantom_omni package](http://www.ros.org/wiki/phantom_omni). However, it has several advantages:
 - Catkinized build system
