@@ -88,7 +88,7 @@ public:
 		state->out_vel3 = zeros;  //3x1 history of velocity
 		state->pos_hist1 = zeros; //3x1 history of position
 		state->pos_hist2 = zeros; //3x1 history of position
-		state->lock = true;
+		state->lock = false;
 		state->lock_pos = zeros;
 
 	}
