@@ -24,5 +24,4 @@ libgl1-mesa-dev:
     ubuntu: libgl1-mesa-dev
 libglw1-mesa-dev:
     ubuntu: libglw1-mesa-dev
-libraw1394-dev:
-    ubuntu: libraw1394-dev
+

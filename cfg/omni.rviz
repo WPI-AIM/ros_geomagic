@@ -95,7 +95,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
       Name: RobotModel
-      Robot Description: omni_robot_description
+      Robot Description: Geomagic_robot_description
       TF Prefix: ""
       Update Interval: 0
       Value: true

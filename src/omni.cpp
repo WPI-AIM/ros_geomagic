@@ -53,11 +53,12 @@ public:
 	OmniState *state;
 
 	void init(OmniState *s) {
-		ros::param::param(std::string("~omni_name"), omni_name,
-				std::string("omni1"));
+		ros::param::param(std::string("~device_name"), omni_name,
+				std::string("Geomagic"));
 
                 // Publish joint states for robot_state_publisher,
                 // and anyone else who wants them.
+		ROS_INFO("Omni name: %s", omni_name.c_str() );
 		std::ostringstream joint_topic;
 		joint_topic << omni_name << "_joint_states";
 		joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
@@ -121,12 +122,12 @@ public:
 		joint_state.position[1] = state->thetas[2];
 		joint_state.name[2] = "elbow";
 		joint_state.position[2] = state->thetas[3];
-		joint_state.name[3] = "wrist1";
+		joint_state.name[3] = "yaw";
 		joint_state.position[3] = -state->thetas[4] + M_PI;
-		joint_state.name[4] = "wrist2";
+		joint_state.name[4] = "pitch";
 		joint_state.position[4] = -state->thetas[5] - 3*M_PI/4;
-		joint_state.name[5] = "wrist3";
-		joint_state.position[5] = -state->thetas[6] - M_PI;
+		joint_state.name[5] = "roll";
+		joint_state.position[5] = -(-state->thetas[6] - M_PI);
 		joint_pub.publish(joint_state);
 
 		if ((state->buttons[0] != state->buttons_prev[0])
@@ -243,6 +244,7 @@ void *ros_publish(void *ptr) {
 	PhantomROS *omni_ros = (PhantomROS *) ptr;
 	int publish_rate;
 	omni_ros->n.param(std::string("publish_rate"), publish_rate, 100);
+	ROS_INFO("Publish rate set to %d", publish_rate);
 	ros::Rate loop_rate(publish_rate);
 	ros::AsyncSpinner spinner(2);
 	spinner.start();
@@ -255,12 +257,17 @@ void *ros_publish(void *ptr) {
 }
 
 int main(int argc, char** argv) {
+	ros::init(argc, argv, "geomagic_haptic_node");
+	ros::NodeHandle nh("~");
+	std::string device_name="";
+	nh.getParam("device_name", device_name);
+	ROS_INFO("Device name: %s", device_name.c_str());
 	////////////////////////////////////////////////////////////////
 	// Init Phantom
 	////////////////////////////////////////////////////////////////
 	HDErrorInfo error;
 	HHD hHD;
-	hHD = hdInitDevice(HD_DEFAULT_DEVICE);
+	hHD = hdInitDevice(device_name.c_str());//use ros param and set in launch file
 	if (HD_DEVICE_ERROR(error = hdGetError())) {
 		//hduPrintError(stderr, &error, "Failed to initialize haptic device");
 		ROS_ERROR("Failed to initialize haptic device"); //: %s", &error);
@@ -279,10 +286,9 @@ int main(int argc, char** argv) {
 	////////////////////////////////////////////////////////////////
 	// Init ROS
 	////////////////////////////////////////////////////////////////
-	ros::init(argc, argv, "omni_haptic_node");
+
 	OmniState state;
 	PhantomROS omni_ros;
-
 	omni_ros.init(&state);
 	hdScheduleAsynchronous(omni_state_callback, &state,
 			HD_MAX_SCHEDULER_PRIORITY);

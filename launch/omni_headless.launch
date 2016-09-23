@@ -1,14 +1,24 @@
 <launch>
+
+   <arg name="device_name" default="Geomagic"/>
+   <param name="publish_rate" type="int" value="100" />
+   
+   
+   
 	<!-- omni node publishes joint states on omni1_joint_states -->
-        <node name="omni1" pkg="phantom_omni" type="omni" output="screen" />
+        <node name="$(arg device_name)" pkg="phantom_omni" type="omni" output="screen">
+            <param name="device_name" type="str" value="$(arg device_name)"/>
+            
+        </node>
 	
 	<!-- robot_description tells robot_state_publisher where to find the omni's urdf description -->
-        <param name="omni_robot_description" command="cat $(find omni_description)/urdf/omni.urdf" />
+        <param name="$(arg device_name)_robot_description" command="cat $(find omni_description)/urdf/omni.urdf" />
 
-	<!-- robot_state_publisher reads omni1_joint_states and publishes corresponding tfs -->
-        <node name="omni1_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-	  <remap from="joint_states" to="omni1_joint_states" />
-	  <remap from="robot_description" to="omni_robot_description" />
+	<!-- robot_state_publisher reads Geomagic_joint_states and publishes corresponding tfs -->
+        <node name="$(arg device_name)_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+	  <remap from="joint_states" to="$(arg device_name)_joint_states" />
+	  <remap from="robot_description" to="$(arg device_name)_robot_description" />
 	</node>
+	
 </launch>
 
