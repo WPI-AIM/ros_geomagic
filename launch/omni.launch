@@ -1,6 +1,0 @@
-<launch>
-  <include file="$(find phantom_omni)/launch/omni_headless.launch" />
-  <!-- rviz just lets you see the end result :) -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find phantom_omni)/cfg/omni.rviz" required="true" />
-</launch>
-

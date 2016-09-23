@@ -1,0 +1,36 @@
+<package>
+  <name>geomagic_control</name>
+  <version>1.0.0</version>
+  <description>
+     ROS Node for Geomagic devices.
+  </description>
+  <maintainer email="sb@generationrobots.com">Sven Bock</maintainer>
+  <author>Hai Nguyen, Marc Killpack, Chi-Hung King, Advisor: Prof. Charlie Kemp, Lab: Healthcare Robotics Lab at Georgia Tech</author>
+  <license>new BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>genmsg</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>openhaptics-ae</build_depend>
+  <build_depend>rosconsole</build_depend>
+  <build_depend>urdf</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>genmsg</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>rosconsole</run_depend>
+  <run_depend>urdf</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>geomagic_description</run_depend>
+</package>
+
+
