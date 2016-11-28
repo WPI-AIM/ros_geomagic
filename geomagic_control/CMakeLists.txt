@@ -13,6 +13,6 @@ include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 add_executable(omni src/omni.cpp)
 
-target_link_libraries(omni HD HDU rt ncurses ${catkin_LIBRARIES})
+target_link_libraries(omni HD HL HDU rt ncurses ${catkin_LIBRARIES})
 
 

@@ -36,7 +36,7 @@ struct OmniState {
 	float thetas[7];
 	int buttons[2];
 	int buttons_prev[2];
-	bool lock;
+	int lock[3];
 	hduVector3Dd lock_pos;
 };
 
@@ -60,18 +60,18 @@ public:
                 // and anyone else who wants them.
 		ROS_INFO("Omni name: %s", omni_name.c_str() );
 		std::ostringstream joint_topic;
-		joint_topic << omni_name << "_joint_states";
+		joint_topic << "joint_states";
 		joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
 		cart_pub = n.advertise<sensor_msgs::JointState>("end_effector_pose", 1);
 
 		// Publish button state on NAME_button.
 		std::ostringstream button_topic;
-		button_topic << omni_name << "_button";
+		button_topic <<"button";
 		button_pub = n.advertise<geomagic_control::PhantomButtonEvent>(button_topic.str(), 100);
 
 		// Subscribe to NAME_force_feedback.
 		std::ostringstream force_feedback_topic;
-		force_feedback_topic << omni_name << "_force_feedback";
+		force_feedback_topic << "force_feedback";
 		haptic_sub = n.subscribe(force_feedback_topic.str(), 100,
 				&PhantomROS::force_callback, this);
 
@@ -90,7 +90,9 @@ public:
 		state->out_vel3 = zeros;  //3x1 history of velocity
 		state->pos_hist1 = zeros; //3x1 history of position
 		state->pos_hist2 = zeros; //3x1 history of position
-		state->lock = false;
+		state->lock[0] = false;
+		state->lock[1] = false;
+		state->lock[2] = false;
 		state->lock_pos = zeros;
 
 	}
@@ -110,6 +112,9 @@ public:
 		state->lock_pos[0] = omnifeed->position.x;
 		state->lock_pos[1] = omnifeed->position.y;
 		state->lock_pos[2] = omnifeed->position.z;
+		for(int i=0; i<3;i++){
+			state->lock[i] = omnifeed->lock[i];
+		}
 	}
 
 	void publish_omni_state() {
@@ -136,7 +141,8 @@ public:
 
 			if ((state->buttons[0] == state->buttons[1])
 					and (state->buttons[0] == 1)) {
-				state->lock = !(state->lock);
+				for(int i=0; i<3;i++)
+					state->lock[i] = !(state->lock[i]);
 			}
 			geomagic_control::PhantomButtonEvent button_event;
 			button_event.grey_button = state->buttons[0];
@@ -187,11 +193,15 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	omni_state->out_vel3 = omni_state->out_vel2;
 	omni_state->out_vel2 = omni_state->out_vel1;
 	omni_state->out_vel1 = omni_state->velocity;
-	if (omni_state->lock == true) {
-		omni_state->force = 0.04 * (omni_state->lock_pos - omni_state->position)
-				- 0.001 * omni_state->velocity;
+	for(int i=0; i<3;i++){
+		if (omni_state->lock[i]) {
+			omni_state->force[i] = 0.3 * (omni_state->lock_pos[i] - omni_state->position[i])
+				- 0.001 * omni_state->velocity[i];
+		}
 	}
-
+//	ROS_INFO("force x %.2f", omni_state->force[0]);
+//	ROS_INFO("force y %.2f" , omni_state->force[1]);
+//	ROS_INFO("force z %.2f" , omni_state->force[2]);
 	hdSetDoublev(HD_CURRENT_FORCE, omni_state->force);
 
 	//Get buttons
@@ -296,6 +306,14 @@ int main(int argc, char** argv) {
 	}
 	HHD_Auto_Calibration();
 
+//	HHLRC  hHLRC = hlCreateContext(hHD);
+//	hlMakeCurrent(hHLRC);
+//	hlBeginFrame();
+//	HLboolean inkwell_state;
+//	hlGetBooleanv(HL_INKWELL_STATE, &inkwell_state);
+//	ROS_INFO("inkwell active %d",inkwell_state );
+//	hlEndFrame();
+//	return 0;
 	////////////////////////////////////////////////////////////////
 	// Init ROS
 	////////////////////////////////////////////////////////////////
