@@ -139,11 +139,11 @@ public:
 		if ((state->buttons[0] != state->buttons_prev[0])
 				or (state->buttons[1] != state->buttons_prev[1])) {
 
-			if ((state->buttons[0] == state->buttons[1])
-					and (state->buttons[0] == 1)) {
-				for(int i=0; i<3;i++)
-					state->lock[i] = !(state->lock[i]);
-			}
+//			if ((state->buttons[0] == state->buttons[1])
+//					and (state->buttons[0] == 1)) {
+//				for(int i=0; i<3;i++)
+//					state->lock[i] = !(state->lock[i]);
+//			}
 			geomagic_control::PhantomButtonEvent button_event;
 			button_event.grey_button = state->buttons[0];
 			button_event.white_button = state->buttons[1];

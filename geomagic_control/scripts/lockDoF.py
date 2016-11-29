@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+# THIS SCRIPT WAS JUST TO TEST STUFF AND SHOULD NOT  BE USED ANY MORE
 import rospy
 import math
 from sensor_msgs.msg import JointState
