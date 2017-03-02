@@ -17,4 +17,11 @@ This is based on the [package of Dane Powell](https://github.com/danepowell/phan
 - Uses the more beautiful URDF model from [Francisco](https://github.com/fsuarez6/phantom_omni/tree/hydro-devel/omni_description)
 
 To see it in action, simply:
+```
 roslaunch geomagic_control geomagic.launch
+```
+
+In case you have some troubles and your first 3 values are 0, you probably don't have English set as main language. Thats a problem coming from Open Haptics. Simply add this to your ~/.bashrc
+```
+export LC_ALL=en_US.UTF-8
+```
