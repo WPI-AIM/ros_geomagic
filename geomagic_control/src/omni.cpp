@@ -1,5 +1,7 @@
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/Joy.h>
+#include <geometry_msgs/PoseStamped.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -44,7 +46,7 @@ class PhantomROS {
 
 public:
 	ros::NodeHandle n;
-	ros::Publisher joint_pub,cart_pub;
+    ros::Publisher joint_pub, cart_pub, joy_pub, pose_stmp_pub;
 
 	ros::Publisher button_pub;
 	ros::Subscriber haptic_sub;
@@ -63,6 +65,8 @@ public:
 		joint_topic << "joint_states";
 		joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
 		cart_pub = n.advertise<sensor_msgs::JointState>("end_effector_pose", 1);
+        joy_pub = n.advertise<sensor_msgs::Joy>("joy",1);
+        pose_stmp_pub = n.advertise<geometry_msgs::PoseStamped>("pose",1);
 
 		// Publish button state on NAME_button.
 		std::ostringstream button_topic;
@@ -163,6 +167,37 @@ public:
 		js_cartesian.velocity.push_back(state->velocity[1]);
 		js_cartesian.velocity.push_back(state->velocity[2]);
 		cart_pub.publish(js_cartesian);
+
+        geometry_msgs::PoseStamped pose_stmp_msg;
+        pose_stmp_msg.header = joint_state.header;
+        pose_stmp_msg.header.frame_id = "base";
+        pose_stmp_msg.pose.position.x = state->position[0];
+        pose_stmp_msg.pose.position.y = state->position[1];
+        pose_stmp_msg.pose.position.z = state->position[2];
+
+        pose_stmp_msg.pose.orientation.x = state->thetas[4];
+        pose_stmp_msg.pose.orientation.y = state->thetas[5];
+        pose_stmp_msg.pose.orientation.z = state->thetas[6];
+        pose_stmp_msg.pose.orientation.w = 1;
+        pose_stmp_pub.publish(pose_stmp_msg);
+
+        sensor_msgs::Joy joy_msg;
+        joy_msg.header = joint_state.header;
+        int dim_size = 6;
+        joy_msg.axes.resize(dim_size);
+        for(int i=0; i<dim_size; i++){
+            if (i < 3){
+            joy_msg.axes[i] = state->position[i];
+            }
+            else{
+                joy_msg.axes[i] = state->rot[i-3];
+            }
+        }
+        joy_msg.buttons.resize(2);
+        joy_msg.buttons[0] = state->buttons[0];
+        joy_msg.buttons[1] = state->buttons[1];
+
+        joy_pub.publish(joy_msg);
 	}
 };
 
