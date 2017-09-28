@@ -1,14 +1,14 @@
 <launch>
 
-   <arg name="device_name_param" default="Default Device"/>
+   <arg name="physical_device_name" default="Default Device"/>
    <arg name="device_name" default="Geomagic"/>
-   <param name="publish_rate" type="int" value="100" />
+   <param name="publish_rate" type="int" value="1000" />
    
  
    <group ns="$(arg device_name)">
 	<!-- omni node publishes joint states on omni1_joint_states -->
         <node name="$(arg device_name)" pkg="geomagic_control" type="omni" output="screen">
-            <param name="device_name_param" type="str" value="$(arg device_name)"/>
+            <param name="physical_device_name" type="str" value="$(arg device_name)"/>
             
         </node>
 	

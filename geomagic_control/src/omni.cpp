@@ -301,7 +301,7 @@ void HHD_Auto_Calibration() {
 void *ros_publish(void *ptr) {
 	PhantomROS *omni_ros = (PhantomROS *) ptr;
 	int publish_rate;
-	omni_ros->n.param(std::string("publish_rate"), publish_rate, 100);
+    omni_ros->n.param(std::string("/publish_rate"), publish_rate, 100);
 	ROS_INFO("Publish rate set to %d", publish_rate);
 	ros::Rate loop_rate(publish_rate);
 	ros::AsyncSpinner spinner(2);
