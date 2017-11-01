@@ -18,6 +18,8 @@
 #include "geomagic_control/PhantomButtonEvent.h"
 #include "geomagic_control/OmniFeedback.h"
 #include <pthread.h>
+#include <tf/tf.h>
+#include <tf/LinearMath/Quaternion.h>
 
 int calibrationStyle;
 
@@ -175,10 +177,9 @@ public:
         pose_stmp_msg.pose.position.y = state->position[1];
         pose_stmp_msg.pose.position.z = state->position[2];
 
-        pose_stmp_msg.pose.orientation.x = state->thetas[4];
-        pose_stmp_msg.pose.orientation.y = state->thetas[5];
-        pose_stmp_msg.pose.orientation.z = state->thetas[6];
-        pose_stmp_msg.pose.orientation.w = 1;
+        tf::Quaternion quat;
+        quat.setRPY(state->thetas[6], state->thetas[5], state->thetas[4]);
+        tf::quaternionTFToMsg(quat, pose_stmp_msg.pose.orientation);
         pose_stmp_pub.publish(pose_stmp_msg);
 
         sensor_msgs::Joy joy_msg;
