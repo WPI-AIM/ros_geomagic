@@ -140,6 +140,33 @@ public:
         return pose_stmp;
     }
 
+    bool isPoseValid(const geometry_msgs::PoseStamped &pose_stmp){
+        if(      std::isnan(pose_stmp.pose.position.x)
+              || std::isnan(pose_stmp.pose.position.y)
+              || std::isnan(pose_stmp.pose.position.z)){
+            ROS_ERROR("Pos Error");
+            return false;
+        }
+        else if(      std::isnan(pose_stmp.pose.orientation.x)
+              || std::isnan(pose_stmp.pose.orientation.y)
+              || std::isnan(pose_stmp.pose.orientation.z)
+              || std::isnan(pose_stmp.pose.orientation.w)){
+            ROS_ERROR("Rot Error");
+            return false;
+        }
+//        else if(!(sqrt(pose_stmp.pose.orientation.x +
+//                 pose_stmp.pose.orientation.y +
+//                 pose_stmp.pose.orientation.z +
+//                 pose_stmp.pose.orientation.w) - 1) < 1e-6){
+//            ROS_ERROR("Normalized Error");
+//            return false;
+//        }
+        else{
+            return true;
+        }
+
+    }
+
 	void publish_omni_state() {
 		sensor_msgs::JointState joint_state;
 		joint_state.header.stamp = ros::Time::now();
@@ -192,8 +219,9 @@ public:
         pose_stmp_msg.header.frame_id = "world";
         state->transform.transpose();
         pose_stmp_msg = transHD2PoseStamped(state->transform);
+        if(isPoseValid(pose_stmp_msg)){
         pose_stmp_pub.publish(pose_stmp_msg);
-
+        }
         sensor_msgs::Joy joy_msg;
         joy_msg.header = joint_state.header;
         int dim_size = 6;
