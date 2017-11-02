@@ -20,6 +20,7 @@
 #include <pthread.h>
 #include <tf/tf.h>
 #include <tf/LinearMath/Quaternion.h>
+#include <tf/LinearMath/Matrix3x3.h>
 
 int calibrationStyle;
 
@@ -37,6 +38,7 @@ struct OmniState {
 	hduVector3Dd rot;
 	hduVector3Dd joints;
 	hduVector3Dd force;   //3 element double vector force[0], force[1], force[2]
+    hduMatrix transform;
 	float thetas[7];
 	int buttons[2];
 	int buttons_prev[2];
@@ -123,6 +125,21 @@ public:
 		}
 	}
 
+    geometry_msgs::PoseStamped transHD2PoseStamped(const hduMatrix& hdMat){
+        geometry_msgs::PoseStamped pose_stmp;
+        tf::Matrix3x3 tfMat;
+        tfMat.setValue(hdMat.get(0,0),hdMat.get(0,1),hdMat.get(0,2),
+                       hdMat.get(1,0),hdMat.get(1,1),hdMat.get(1,2),
+                       hdMat.get(2,0),hdMat.get(2,1),hdMat.get(2,2));
+        tf::Quaternion quat;
+        tfMat.getRotation(quat);
+        tf::quaternionTFToMsg(quat, pose_stmp.pose.orientation);
+        pose_stmp.pose.position.x =  hdMat.get(0,3); // x along -x
+        pose_stmp.pose.position.y =  hdMat.get(1,3); // y along z
+        pose_stmp.pose.position.z =  hdMat.get(2,3); // z along y
+        return pose_stmp;
+    }
+
 	void publish_omni_state() {
 		sensor_msgs::JointState joint_state;
 		joint_state.header.stamp = ros::Time::now();
@@ -172,14 +189,9 @@ public:
 
         geometry_msgs::PoseStamped pose_stmp_msg;
         pose_stmp_msg.header = joint_state.header;
-        pose_stmp_msg.header.frame_id = "base";
-        pose_stmp_msg.pose.position.x = state->position[0];
-        pose_stmp_msg.pose.position.y = state->position[1];
-        pose_stmp_msg.pose.position.z = state->position[2];
-
-        tf::Quaternion quat;
-        quat.setRPY(state->thetas[6], state->thetas[5], state->thetas[4]);
-        tf::quaternionTFToMsg(quat, pose_stmp_msg.pose.orientation);
+        pose_stmp_msg.header.frame_id = "world";
+        state->transform.transpose();
+        pose_stmp_msg = transHD2PoseStamped(state->transform);
         pose_stmp_pub.publish(pose_stmp_msg);
 
         sensor_msgs::Joy joy_msg;
@@ -213,6 +225,7 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, omni_state->rot);
 	hdGetDoublev(HD_CURRENT_POSITION, omni_state->position);
 	hdGetDoublev(HD_CURRENT_JOINT_ANGLES, omni_state->joints);
+    hdGetDoublev(HD_CURRENT_TRANSFORM, omni_state->transform);
 
 	hduVector3Dd vel_buff(0, 0, 0);
 	vel_buff = (omni_state->position * 3 - 4 * omni_state->pos_hist1
