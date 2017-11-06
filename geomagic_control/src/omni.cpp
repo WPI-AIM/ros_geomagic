@@ -55,8 +55,17 @@ public:
 	ros::Publisher button_pub;
 	ros::Subscriber haptic_sub;
 	std::string omni_name;
+    int _first_run;
+
+    double pos_error_lim[3];
 
 	OmniState *state;
+    geometry_msgs::PoseStamped pose_stmp_msg, pose_stmp_msg_pre;
+
+    PhantomROS(){
+        pos_error_lim[0] = 5; pos_error_lim[1] = 5 ; pos_error_lim[2] = 5;
+        _first_run = true;
+    }
 
 	void init(OmniState *s) {
 		ros::param::param(std::string("~device_name"), omni_name,
@@ -140,31 +149,37 @@ public:
         return pose_stmp;
     }
 
-    bool isPoseValid(const geometry_msgs::PoseStamped &pose_stmp){
-        if(      std::isnan(pose_stmp.pose.position.x)
-              || std::isnan(pose_stmp.pose.position.y)
-              || std::isnan(pose_stmp.pose.position.z)){
-            ROS_ERROR("Pos Error");
-            return false;
-        }
-        else if(      std::isnan(pose_stmp.pose.orientation.x)
-              || std::isnan(pose_stmp.pose.orientation.y)
-              || std::isnan(pose_stmp.pose.orientation.z)
-              || std::isnan(pose_stmp.pose.orientation.w)){
-            ROS_ERROR("Rot Error");
-            return false;
-        }
-//        else if(!(sqrt(pose_stmp.pose.orientation.x +
-//                 pose_stmp.pose.orientation.y +
-//                 pose_stmp.pose.orientation.z +
-//                 pose_stmp.pose.orientation.w) - 1) < 1e-6){
-//            ROS_ERROR("Normalized Error");
+    bool isPoseValid(const geometry_msgs::PoseStamped &pose_stmp, const geometry_msgs::PoseStamped &pose_stmp_pre){
+        double ex, ey, ez, x,y,z, px, py ,pz;
+        x = pose_stmp.pose.position.x;
+        y = pose_stmp.pose.position.y;
+        z = pose_stmp.pose.position.z;
+        px = pose_stmp_pre.pose.position.x;
+        py = pose_stmp_pre.pose.position.y;
+        pz = pose_stmp_pre.pose.position.z;
+        ex = x - px;
+        ey = y - py;
+        ez = z - pz;
+//        if(      std::isnan(pose_stmp.pose.position.x)
+//              || std::isnan(pose_stmp.pose.position.y)
+//              || std::isnan(pose_stmp.pose.position.z)){
+//            ROS_ERROR("Pos Error");
 //            return false;
 //        }
+//        else if(      std::isnan(pose_stmp.pose.orientation.x)
+//              || std::isnan(pose_stmp.pose.orientation.y)
+//              || std::isnan(pose_stmp.pose.orientation.z)
+//              || std::isnan(pose_stmp.pose.orientation.w)){
+//            ROS_ERROR("Rot Error");
+//            return false;
+//        }
+        if(std::abs(ex) > pos_error_lim[0] || std::abs(ey) > pos_error_lim[1] || std::abs(ez) > pos_error_lim[2]){
+            ROS_WARN("Glitch is Transfrom Data form Device ex %f ey %f ez %f", ex, ey, ez);
+            return false;
+        }
         else{
             return true;
         }
-
     }
 
 	void publish_omni_state() {
@@ -214,14 +229,22 @@ public:
 		js_cartesian.velocity.push_back(state->velocity[2]);
 		cart_pub.publish(js_cartesian);
 
-        geometry_msgs::PoseStamped pose_stmp_msg;
         pose_stmp_msg.header = joint_state.header;
         pose_stmp_msg.header.frame_id = "world";
+        pose_stmp_msg_pre = pose_stmp_msg;
         state->transform.transpose();
         pose_stmp_msg = transHD2PoseStamped(state->transform);
-        if(isPoseValid(pose_stmp_msg)){
-        pose_stmp_pub.publish(pose_stmp_msg);
+        if(!isPoseValid(pose_stmp_msg, pose_stmp_msg_pre)){
+            if(_first_run){
+                _first_run = false;
+            }
+            else{
+            pose_stmp_msg = pose_stmp_msg_pre;
+            }
         }
+        pose_stmp_msg.header.stamp = ros::Time::now();
+        pose_stmp_pub.publish(pose_stmp_msg);
+
         sensor_msgs::Joy joy_msg;
         joy_msg.header = joint_state.header;
         int dim_size = 6;
@@ -249,7 +272,7 @@ HDCallbackCode HDCALLBACK omni_state_callback(void *pUserData) {
 	    hdUpdateCalibration(calibrationStyle);
 	  }
 	hdBeginFrame(hdGetCurrentDevice());
-	//Get angles, set forces
+    //Get angles, set forces
 	hdGetDoublev(HD_CURRENT_GIMBAL_ANGLES, omni_state->rot);
 	hdGetDoublev(HD_CURRENT_POSITION, omni_state->position);
 	hdGetDoublev(HD_CURRENT_JOINT_ANGLES, omni_state->joints);
@@ -346,72 +369,72 @@ void *ros_publish(void *ptr) {
     omni_ros->n.param(std::string("/publish_rate"), publish_rate, 100);
 	ROS_INFO("Publish rate set to %d", publish_rate);
 	ros::Rate loop_rate(publish_rate);
-	ros::AsyncSpinner spinner(2);
-	spinner.start();
+    ros::AsyncSpinner spinner(2);
+    spinner.start();
 
 	while (ros::ok()) {
-		omni_ros->publish_omni_state();
+        omni_ros->publish_omni_state();
 		loop_rate.sleep();
-	}
+    }
 	return NULL;
 }
 
 int main(int argc, char** argv) {
-	ros::init(argc, argv, "geomagic_control_node");
-	ros::NodeHandle nh("~");
-	std::string device_name="";
-	nh.getParam("device_name", device_name);
-	ROS_INFO("Device name: %s", device_name.c_str());
-	////////////////////////////////////////////////////////////////
-	// Init Phantom
-	////////////////////////////////////////////////////////////////
-	HDErrorInfo error;
-	HHD hHD;
-	hHD = hdInitDevice(device_name.c_str());//use ros param and set in launch file
-	if (HD_DEVICE_ERROR(error = hdGetError())) {
-		//hduPrintError(stderr, &error, "Failed to initialize haptic device");
-		ROS_ERROR("Failed to initialize haptic device"); //: %s", &error);
-		return -1;
-	}
+    ros::init(argc, argv, "geomagic_control_node");
+    ros::NodeHandle nh("~");
+    std::string device_name="";
+    nh.getParam("device_name", device_name);
+    ROS_INFO("Device name: %s", device_name.c_str());
+    ////////////////////////////////////////////////////////////////
+    // Init Phantom
+    ////////////////////////////////////////////////////////////////
+    HDErrorInfo error;
+    HHD hHD;
+    hHD = hdInitDevice(device_name.c_str());//use ros param and set in launch file
+    if (HD_DEVICE_ERROR(error = hdGetError())) {
+        //hduPrintError(stderr, &error, "Failed to initialize haptic device");
+        ROS_ERROR("Failed to initialize haptic device"); //: %s", &error);
+        return -1;
+    }
 
-	ROS_INFO("Found %s.", hdGetString(HD_DEVICE_MODEL_TYPE));
-	hdEnable(HD_FORCE_OUTPUT);
-	hdStartScheduler();
-	if (HD_DEVICE_ERROR(error = hdGetError())) {
-		ROS_ERROR("Failed to start the scheduler"); //, &error);
-		return -1;
-	}
-	HHD_Auto_Calibration();
+    ROS_INFO("Found %s.", hdGetString(HD_DEVICE_MODEL_TYPE));
+    hdEnable(HD_FORCE_OUTPUT);
+    hdStartScheduler();
+    if (HD_DEVICE_ERROR(error = hdGetError())) {
+        ROS_ERROR("Failed to start the scheduler"); //, &error);
+        return -1;
+    }
+    HHD_Auto_Calibration();
 
-//	HHLRC  hHLRC = hlCreateContext(hHD);
-//	hlMakeCurrent(hHLRC);
-//	hlBeginFrame();
-//	HLboolean inkwell_state;
-//	hlGetBooleanv(HL_INKWELL_STATE, &inkwell_state);
-//	ROS_INFO("inkwell active %d",inkwell_state );
-//	hlEndFrame();
-//	return 0;
-	////////////////////////////////////////////////////////////////
-	// Init ROS
-	////////////////////////////////////////////////////////////////
+    //	HHLRC  hHLRC = hlCreateContext(hHD);
+    //	hlMakeCurrent(hHLRC);
+    //	hlBeginFrame();
+    //	HLboolean inkwell_state;
+    //	hlGetBooleanv(HL_INKWELL_STATE, &inkwell_state);
+    //	ROS_INFO("inkwell active %d",inkwell_state );
+    //	hlEndFrame();
+    //	return 0;
+    ////////////////////////////////////////////////////////////////
+    // Init ROS
+    ////////////////////////////////////////////////////////////////
 
-	OmniState state;
-	PhantomROS omni_ros;
-	omni_ros.init(&state);
-	hdScheduleAsynchronous(omni_state_callback, &state,
-			HD_MAX_SCHEDULER_PRIORITY);
+    OmniState state;
+    PhantomROS omni_ros;
+    omni_ros.init(&state);
+    hdScheduleAsynchronous(omni_state_callback, &state,
+                           HD_MAX_SCHEDULER_PRIORITY);
 
-	////////////////////////////////////////////////////////////////
-	// Loop and publish
-	////////////////////////////////////////////////////////////////
-	pthread_t publish_thread;
-	pthread_create(&publish_thread, NULL, ros_publish, (void*) &omni_ros);
-	pthread_join(publish_thread, NULL);
+    ////////////////////////////////////////////////////////////////
+    // Loop and publish
+    ////////////////////////////////////////////////////////////////
+    pthread_t publish_thread;
+    pthread_create(&publish_thread, NULL, ros_publish, (void*) &omni_ros);
+    pthread_join(publish_thread, NULL);
 
-	ROS_INFO("Ending Session....");
-	hdStopScheduler();
-	hdDisableDevice(hHD);
+    ROS_INFO("Ending Session....");
+    hdStopScheduler();
+    hdDisableDevice(hHD);
 
-	return 0;
+    return 0;
 }
 
