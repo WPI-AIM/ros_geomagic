@@ -13,6 +13,8 @@ include_directories(${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS})
 
 add_executable(omni src/omni.cpp)
 
+add_dependencies(omni geomagic_control_generate_messages_cpp)
+
 target_link_libraries(omni HD HL HDU rt ncurses ${catkin_LIBRARIES})
 
 

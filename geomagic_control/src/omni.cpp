@@ -174,7 +174,7 @@ public:
 //            return false;
 //        }
         if(std::abs(ex) > pos_error_lim[0] || std::abs(ey) > pos_error_lim[1] || std::abs(ez) > pos_error_lim[2]){
-            ROS_WARN("Glitch is Transfrom Data form Device ex %f ey %f ez %f", ex, ey, ez);
+            //ROS_WARN("Glitch is Transfrom Data form Device ex %f ey %f ez %f", ex, ey, ez);
             return false;
         }
         else{
