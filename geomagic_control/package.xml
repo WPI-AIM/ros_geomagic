@@ -1,11 +1,12 @@
 <package>
   <name>geomagic_control</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>
      ROS Node for Geomagic devices.
   </description>
-  <maintainer email="sb@generationrobots.com">Sven Bock</maintainer>
-  <author>Hai Nguyen, Marc Killpack, Chi-Hung King, Advisor: Prof. Charlie Kemp, Lab: Healthcare Robotics Lab at Georgia Tech</author>
+  <maintainer email="amunawar@wpi.edu">Adnan Munawar</maintainer>
+  <author>Adnan Munawar, Hai Nguyen, Marc Killpack, Chi-Hung King, Advisor: Prof. Charlie Kemp, Lab: Healthcare Robotics Lab at Georgia Tech
+  and Automation in Interventional Medicine Lab (AIM Lab), WPI</author>
   <license>new BSD</license>
 
   <buildtool_depend>catkin</buildtool_depend>
