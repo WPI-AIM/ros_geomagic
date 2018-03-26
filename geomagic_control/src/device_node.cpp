@@ -1,5 +1,5 @@
 /*
- * Copyright <2018> <Adnan Munawar, Hai Nguyen, Marc Killpack, Chi-Hung King, Charlie Kemp>
+ * Copyright <2018> <Dane Powell, Hai Nguyen, Marc Killpack, Chi-Hung King, Charlie Kemp, Sven Bock, Adnan Munawar>
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice and list of authors.
