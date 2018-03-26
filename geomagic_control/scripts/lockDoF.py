@@ -3,7 +3,7 @@
 import rospy
 import math
 from sensor_msgs.msg import JointState
-from geomagic_control.msg import OmniFeedback
+from geomagic_control.msg import DeviceFeedback
 import tf
 from geometry_msgs.msg import Pose, PoseStamped, Point, Quaternion
 from std_msgs.msg import Header

@@ -1,4 +1,4 @@
-<Robot name="omni" file="omni.dae">
+<Robot name="geomagic" file="geomagic.dae">
   <Manipulator name="arm">
     <base>base</base>
     <effector>stylus</effector>
