@@ -69,7 +69,7 @@ class PhantomROS {
 
 public:
     ros::NodeHandle n;
-    ros::Publisher joint_pub, twist_pub, joy_pub, pose_stmp_pub, button_pub;
+    ros::Publisher joint_pub, twist_pub, joy_pub, pose_pub, button_pub;
     ros::Subscriber wrench_sub;
     std::string dev_name;
     int _first_run;
@@ -77,8 +77,10 @@ public:
     double pos_error_lim[3];
 
     DeviceState *state;
-    geometry_msgs::PoseStamped pose_stmp_msg, pose_stmp_msg_pre;
+    geometry_msgs::PoseStamped pose_msg, pose_msg_pre;
+    geometry_msgs::Twist twist_msg;
     sensor_msgs::JointState joint_state_msg;
+    sensor_msgs::Joy joy_msg;
     PhantomROS(){
         pos_error_lim[0] = 5; pos_error_lim[1] = 5 ; pos_error_lim[2] = 5;
         _first_run = true;
@@ -91,24 +93,16 @@ public:
         // Publish joint states for robot_state_publisher,
         // and anyone else who wants them.
         ROS_INFO("Device name: %s", dev_name.c_str() );
-        std::ostringstream joint_topic;
-        joint_topic << "joint_states";
-        joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
-        twist_pub  = n.advertise<geometry_msgs::Twist>("twist", 1);
+        // Initialize Publishers
+        joint_pub = n.advertise<sensor_msgs::JointState>("joint_states", 1);
+        twist_pub = n.advertise<geometry_msgs::Twist>("twist", 1);
         joy_pub   = n.advertise<sensor_msgs::Joy>("joy",1);
-        pose_stmp_pub = n.advertise<geometry_msgs::PoseStamped>("pose",1);
+        pose_pub  = n.advertise<geometry_msgs::PoseStamped>("pose",1);
+        button_pub = n.advertise<geomagic_control::DeviceButtonEvent>("button", 100);
+        // Initialize Subscriber
+        wrench_sub = n.subscribe("force_feedback", 100, &PhantomROS::force_callback, this);
 
-        // Publish button state on NAME_button.
-        std::ostringstream button_topic;
-        button_topic <<"button";
-        button_pub = n.advertise<geomagic_control::DeviceButtonEvent>(button_topic.str(), 100);
-
-        // Subscribe to NAME_force_feedback.
-        std::ostringstream force_feedback_topic;
-        force_feedback_topic << "force_feedback";
-        wrench_sub = n.subscribe(force_feedback_topic.str(), 100,
-                                 &PhantomROS::force_callback, this);
-
+        // Initialize fixed message fields
         joint_state_msg.name.resize(6);
         joint_state_msg.position.resize(6);
         joint_state_msg.name[0] = "waist";
@@ -117,6 +111,11 @@ public:
         joint_state_msg.name[3] = "yaw";
         joint_state_msg.name[4] = "pitch";
         joint_state_msg.name[5] = "roll";
+
+        joy_msg.axes.resize(6);
+        joy_msg.buttons.resize(2);
+
+        pose_msg.header.frame_id = "world";
 
         state = s;
         state->buttons[0] = 0;
@@ -144,10 +143,10 @@ public:
      ROS node callback.
      *******************************************************************************/
     void force_callback(const geomagic_control::DeviceFeedbackConstPtr& feedback) {
-        ////////////////////Some people might not like this extra damping, but it
-        ////////////////////helps to stabilize the overall force feedback. It isn't
-        ////////////////////like we are getting direct impedance matching from the
-        ////////////////////geomagic anyway
+        /* Some people might not like this extra damping, but it
+         * helps to stabilize the overall force feedback. It isn't
+         * like we are getting direct impedance matching from the
+         * geomagic anyway */
         state->force[0] = feedback->force.x - 0.001 * state->velocity[0];
         state->force[1] = feedback->force.y - 0.001 * state->velocity[1];
         state->force[2] = feedback->force.z - 0.001 * state->velocity[2];
@@ -175,7 +174,7 @@ public:
         return pose_stmp;
     }
 
-    bool isPoseValid(const geometry_msgs::PoseStamped &pose_stmp, const geometry_msgs::PoseStamped &pose_stmp_pre){
+    bool is_pose_valid(const geometry_msgs::PoseStamped &pose_stmp, const geometry_msgs::PoseStamped &pose_stmp_pre){
         double ex, ey, ez, x,y,z, px, py ,pz;
         x = pose_stmp.pose.position.x;
         y = pose_stmp.pose.position.y;
@@ -196,15 +195,17 @@ public:
     }
 
     void publish_device_state() {
+        // Set and publish joint_state_msg
         joint_state_msg.header.stamp = ros::Time::now();
         joint_state_msg.position[0] = -state->thetas[1];
-        joint_state_msg.position[1] = state->thetas[2];
-        joint_state_msg.position[2] = state->thetas[3];
+        joint_state_msg.position[1] =  state->thetas[2];
+        joint_state_msg.position[2] =  state->thetas[3];
         joint_state_msg.position[3] = -state->thetas[4] + M_PI;
         joint_state_msg.position[4] = -state->thetas[5] - 3*M_PI/4;
-        joint_state_msg.position[5] = -(-state->thetas[6] - M_PI);
+        joint_state_msg.position[5] =  state->thetas[6] + M_PI;
         joint_pub.publish(joint_state_msg);
 
+        // Set and publish button_event_msg
         if ((state->buttons[0] != state->buttons_prev[0]) || (state->buttons[1] != state->buttons_prev[1])){
             geomagic_control::DeviceButtonEvent button_event;
             button_event.grey_button = state->buttons[0];
@@ -213,44 +214,35 @@ public:
             state->buttons_prev[1] = state->buttons[1];
             button_pub.publish(button_event);
         }
-        geometry_msgs::Twist twist_msg;
+
+        // Set and publish twist_msg
         twist_msg.linear.x = state->velocity[0];
         twist_msg.linear.y = state->velocity[1];
         twist_msg.linear.z = state->velocity[2];
         twist_pub.publish(twist_msg);
 
-        pose_stmp_msg.header = joint_state_msg.header;
-        pose_stmp_msg.header.frame_id = "world";
-        pose_stmp_msg_pre = pose_stmp_msg;
+        // Set and publish pose_msg
+        pose_msg.header = joint_state_msg.header;
+        pose_msg_pre = pose_msg;
         state->transform.transpose();
-        pose_stmp_msg = transHD2PoseStamped(state->transform);
-        if(!isPoseValid(pose_stmp_msg, pose_stmp_msg_pre)){
-            if(_first_run){
-                _first_run = false;
-            }
-            else{
-                pose_stmp_msg = pose_stmp_msg_pre;
-            }
+        pose_msg = transHD2PoseStamped(state->transform);
+        if(!is_pose_valid(pose_msg, pose_msg_pre)){
+            if(_first_run) _first_run = false;
+            else pose_msg = pose_msg_pre;
         }
-        pose_stmp_msg.header.stamp = ros::Time::now();
-        pose_stmp_pub.publish(pose_stmp_msg);
+        pose_msg.header.stamp = joint_state_msg.header.stamp;
+        pose_pub.publish(pose_msg);
 
-        sensor_msgs::Joy joy_msg;
+        // Set and publish joy_msg
         joy_msg.header = joint_state_msg.header;
-        int dim_size = 6;
-        joy_msg.axes.resize(dim_size);
-        for(int i=0; i<dim_size; i++){
-            if (i < 3){
-                joy_msg.axes[i] = state->position[i];
-            }
-            else{
-                joy_msg.axes[i] = state->rot[i-3];
-            }
-        }
-        joy_msg.buttons.resize(2);
+        joy_msg.axes[0] = state->position[0];
+        joy_msg.axes[1] = state->position[1];
+        joy_msg.axes[2] = state->position[2];
+        joy_msg.axes[3] = state->rot[0];
+        joy_msg.axes[4] = state->rot[1];
+        joy_msg.axes[5] = state->rot[2];
         joy_msg.buttons[0] = state->buttons[0];
         joy_msg.buttons[1] = state->buttons[1];
-
         joy_pub.publish(joy_msg);
     }
 };
@@ -277,12 +269,12 @@ HDCallbackCode HDCALLBACK device_state_callback(void *pUserData) {
                - 0.7776 * device_state->out_vel3);  //cutoff freq of 20 Hz
     device_state->pos_hist2 = device_state->pos_hist1;
     device_state->pos_hist1 = device_state->position;
-    device_state->inp_vel3 = device_state->inp_vel2;
-    device_state->inp_vel2 = device_state->inp_vel1;
-    device_state->inp_vel1 = vel_buff;
-    device_state->out_vel3 = device_state->out_vel2;
-    device_state->out_vel2 = device_state->out_vel1;
-    device_state->out_vel1 = device_state->velocity;
+    device_state->inp_vel3  = device_state->inp_vel2;
+    device_state->inp_vel2  = device_state->inp_vel1;
+    device_state->inp_vel1  = vel_buff;
+    device_state->out_vel3  = device_state->out_vel2;
+    device_state->out_vel2  = device_state->out_vel1;
+    device_state->out_vel1  = device_state->velocity;
     for(int i=0; i<3;i++){
         if (device_state->lock[i]) {
             device_state->force[i] = 0.3 * (device_state->lock_pos[i] - device_state->position[i])
