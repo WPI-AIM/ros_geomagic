@@ -20,6 +20,7 @@
 #include <sensor_msgs/JointState.h>
 #include <sensor_msgs/Joy.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -68,7 +69,7 @@ class PhantomROS {
 
 public:
     ros::NodeHandle n;
-    ros::Publisher joint_pub, cart_pub, joy_pub, pose_stmp_pub, button_pub;
+    ros::Publisher joint_pub, twist_pub, joy_pub, pose_stmp_pub, button_pub;
     ros::Subscriber wrench_sub;
     std::string dev_name;
     int _first_run;
@@ -93,7 +94,7 @@ public:
         std::ostringstream joint_topic;
         joint_topic << "joint_states";
         joint_pub = n.advertise<sensor_msgs::JointState>(joint_topic.str(), 1);
-        cart_pub  = n.advertise<sensor_msgs::JointState>("end_effector_pose", 1);
+        twist_pub  = n.advertise<geometry_msgs::Twist>("twist", 1);
         joy_pub   = n.advertise<sensor_msgs::Joy>("joy",1);
         pose_stmp_pub = n.advertise<geometry_msgs::PoseStamped>("pose",1);
 
@@ -212,18 +213,11 @@ public:
             state->buttons_prev[1] = state->buttons[1];
             button_pub.publish(button_event);
         }
-        sensor_msgs::JointState js_cartesian;
-        js_cartesian.header = joint_state_msg.header;
-        js_cartesian.name.push_back("x");
-        js_cartesian.name.push_back("y");
-        js_cartesian.name.push_back("z");
-        js_cartesian.position.push_back(state->position[0]);
-        js_cartesian.position.push_back(state->position[1]);
-        js_cartesian.position.push_back(state->position[2]);
-        js_cartesian.velocity.push_back(state->velocity[0]);
-        js_cartesian.velocity.push_back(state->velocity[1]);
-        js_cartesian.velocity.push_back(state->velocity[2]);
-        cart_pub.publish(js_cartesian);
+        geometry_msgs::Twist twist_msg;
+        twist_msg.linear.x = state->velocity[0];
+        twist_msg.linear.y = state->velocity[1];
+        twist_msg.linear.z = state->velocity[2];
+        twist_pub.publish(twist_msg);
 
         pose_stmp_msg.header = joint_state_msg.header;
         pose_stmp_msg.header.frame_id = "world";
