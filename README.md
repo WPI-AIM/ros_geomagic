@@ -15,9 +15,27 @@ https://github.com/HumaRobotics/geomagic_touch
 Adnan Munawar
 
 
-## Ubuntu 18.04:
-After installing OpenHaptics SDK, the follow steps must be completed once:
+## Ubuntu 16.06, 18.04 and 20.04:
+First, please install the Openhaptics SDK from this location:
 
+https://github.com/jhu-cisst-external/phantom-omni-1394-drivers
+
+### How to run
+After you build the package with ROS, you can run it as
+
+```bash
+roslaunch geomagic_control geomagic_headless.launch
+```
+This should start streaming the ROS topics with the states of the device.
+
+### Known Issues
+For Phantom Omni, you may need admin priviliges to access the device. The simplest way is to run the following command in your terminal.
+```
+sudo chmod a+rw /dev/fw*
+```
+Then you can try rerunning the roslauch command above.
+
+### Deprecated:
 ```
 sudo ln -s /usr/lib64/libPHANToMIO.so.4.3 /usr/lib/libPHANToMIO.so.4
 sudo ln -s /usr/lib/libPHANToMIO.so.4 /usr/lib/libPHANToMIO.so
